@@ -148,6 +148,32 @@ router.get("/featured", async (req, res) => {
   }
 });
 
+/**
+ * GET /equipment/categories/stats
+ * Aggregates approved equipment count for each category
+ */
+router.get("/categories/stats", async (req, res) => {
+  try {
+    const equipmentCol = await col("equipment");
+    const stats = await equipmentCol
+      .aggregate([
+        { $match: { status: "approved" } },
+        { $group: { _id: "$category", count: { $sum: 1 } } },
+      ])
+      .toArray();
+
+    const result = {};
+    for (const s of stats) {
+      if (s._id) result[s._id] = s.count;
+    }
+
+    res.json(result);
+  } catch (err) {
+    console.error("Error fetching category stats:", err);
+    res.status(500).json({ message: "Failed to fetch category statistics" });
+  }
+});
+
 /* ==========================================================================
    OWNER SPECIFIC ROUTES
    ========================================================================== */

@@ -74,46 +74,71 @@ router.post("/checkout", verifyToken, verifyRenter, async (req, res) => {
 
     // Calculate verified total amount
     const amount = calcAmount(equipment, startDate, endDate, quantity);
-    const stripe = getStripe();
-
     const clientUrl = process.env.CLIENT_URL || "http://localhost:3000";
 
-    const session = await stripe.checkout.sessions.create({
-      mode: "payment",
-      customer_email: req.user.email,
-      line_items: [
-        {
-          quantity: 1,
-          price_data: {
-            currency: "usd",
-            unit_amount: Math.round(amount * 100),
-            product_data: {
-              name: `${equipment.name} (${quantity} unit${quantity > 1 ? "s" : ""})`,
-              description: `Rental Period: ${startDate} to ${endDate} (${equipment.rentalType})`,
-              images:
-                equipment.image && /^https?:\/\//i.test(equipment.image)
-                  ? [equipment.image]
-                  : [],
+    // If Stripe secret key is configured, initiate real Stripe Checkout session
+    if (process.env.STRIPE_SECRET_KEY && process.env.STRIPE_SECRET_KEY.startsWith("sk_")) {
+      const stripe = getStripe();
+      const session = await stripe.checkout.sessions.create({
+        mode: "payment",
+        customer_email: req.user.email,
+        line_items: [
+          {
+            quantity: 1,
+            price_data: {
+              currency: "usd",
+              unit_amount: Math.round(amount * 100),
+              product_data: {
+                name: `${equipment.name} (${quantity} unit${quantity > 1 ? "s" : ""})`,
+                description: `Rental Period: ${startDate} to ${endDate} (${equipment.rentalType})`,
+                images:
+                  equipment.image && /^https?:\/\//i.test(equipment.image)
+                    ? [equipment.image]
+                    : [],
+              },
             },
           },
+        ],
+        metadata: {
+          equipmentId,
+          startDate,
+          endDate,
+          quantity: String(quantity),
+          contactNumber,
+          deliveryAddress: deliveryAddress.slice(0, 400),
+          notes: (notes || "").slice(0, 400),
+          customerEmail: req.user.email,
+          amount: String(amount),
         },
-      ],
-      metadata: {
-        equipmentId,
-        startDate,
-        endDate,
-        quantity: String(quantity),
-        contactNumber,
-        deliveryAddress: deliveryAddress.slice(0, 400),
-        notes: (notes || "").slice(0, 400),
-        customerEmail: req.user.email,
-        amount: String(amount),
-      },
-      success_url: `${clientUrl}/payment/success?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${clientUrl}/equipment/${equipmentId}`,
+        success_url: `${clientUrl}/payment/success?session_id={CHECKOUT_SESSION_ID}`,
+        cancel_url: `${clientUrl}/equipment/${equipmentId}`,
+      });
+
+      return res.json({ url: session.url, sessionId: session.id });
+    }
+
+    // Sandbox / Test fallback when Stripe key has not been supplied yet
+    const demoSessionId = `demo_cs_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+    const pendingCol = await col("pending_checkouts");
+    await pendingCol.insertOne({
+      sessionId: demoSessionId,
+      customerEmail: req.user.email,
+      equipmentId,
+      startDate,
+      endDate,
+      quantity,
+      contactNumber,
+      deliveryAddress,
+      notes,
+      amount,
+      createdAt: new Date(),
     });
 
-    res.json({ url: session.url, sessionId: session.id });
+    return res.json({
+      url: `${clientUrl}/payment/success?session_id=${demoSessionId}`,
+      sessionId: demoSessionId,
+      demo: true,
+    });
   } catch (err) {
     console.error("Error creating checkout session:", err);
     res.status(500).json({ message: err.message || "Failed to initiate payment checkout" });
@@ -141,16 +166,43 @@ router.post("/confirm", verifyToken, verifyRenter, async (req, res) => {
       return res.json({ booking: existingBooking, alreadyProcessed: true });
     }
 
-    const stripe = getStripe();
-    const session = await stripe.checkout.sessions.retrieve(sessionId, {
-      expand: ["payment_intent"],
-    });
+    let meta = null;
+    let transactionId = sessionId;
+    let currency = "usd";
 
-    if (session.payment_status !== "paid") {
-      return res.status(400).json({ message: "Stripe payment has not been completed" });
+    if (sessionId.startsWith("demo_")) {
+      const pendingCol = await col("pending_checkouts");
+      const pending = await pendingCol.findOne({ sessionId });
+      if (!pending) {
+        return res.status(404).json({ message: "Checkout session record not found or expired" });
+      }
+      meta = {
+        equipmentId: pending.equipmentId,
+        startDate: pending.startDate,
+        endDate: pending.endDate,
+        quantity: pending.quantity,
+        contactNumber: pending.contactNumber,
+        deliveryAddress: pending.deliveryAddress,
+        notes: pending.notes,
+        customerEmail: pending.customerEmail,
+        amount: pending.amount,
+      };
+      transactionId = `demo_txn_${Date.now()}`;
+    } else {
+      const stripe = getStripe();
+      const session = await stripe.checkout.sessions.retrieve(sessionId, {
+        expand: ["payment_intent"],
+      });
+
+      if (session.payment_status !== "paid") {
+        return res.status(400).json({ message: "Stripe payment has not been completed" });
+      }
+
+      meta = session.metadata;
+      transactionId = session.payment_intent?.id || session.id;
+      currency = session.currency || "usd";
     }
 
-    const meta = session.metadata;
     if (meta.customerEmail !== req.user.email) {
       return res.status(403).json({ message: "Forbidden: Session customer email mismatch" });
     }
