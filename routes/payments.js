@@ -4,6 +4,7 @@ import { ObjectId } from "mongodb";
 import { col } from "../config/db.js";
 import { verifyToken, verifyRenter } from "../middleware/auth.js";
 import { calcAmount, getAvailableQty } from "../utils/bookings.js";
+import { sendBookingConfirmation, sendOwnerRentalAlert } from "../utils/email.js";
 
 const router = Router();
 
@@ -198,6 +199,29 @@ router.post("/confirm", verifyToken, verifyRenter, async (req, res) => {
         paymentStatus: "paid",
         createdAt: new Date(),
       });
+
+      // Dispatched transactional notification alerts (Bonus feature)
+      sendBookingConfirmation({
+        customerEmail: req.user.email,
+        customerName: req.user.name,
+        equipmentName: equipment.name,
+        startDate: meta.startDate,
+        endDate: meta.endDate,
+        totalAmount: Number(meta.amount),
+        bookingId: insertedId.toString(),
+      }).catch((err) => console.error("Customer email dispatch error:", err));
+
+      if (equipment.ownerEmail) {
+        sendOwnerRentalAlert({
+          ownerEmail: equipment.ownerEmail,
+          ownerName: equipment.ownerName,
+          equipmentName: equipment.name,
+          customerName: req.user.name,
+          startDate: meta.startDate,
+          endDate: meta.endDate,
+          totalAmount: Number(meta.amount),
+        }).catch((err) => console.error("Owner email dispatch error:", err));
+      }
 
       res.status(201).json({
         success: true,
