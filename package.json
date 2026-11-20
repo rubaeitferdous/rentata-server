@@ -1,0 +1,28 @@
+{
+  "name": "rentara-server",
+  "version": "1.0.0",
+  "description": "Rentara Equipment Rental Platform - Backend API",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "dev": "nodemon index.js",
+    "start": "node index.js",
+    "seed": "node scripts/seedEquipment.js",
+    "make-admin": "node scripts/makeAdmin.js"
+  },
+  "keywords": ["rental", "equipment", "express", "mongodb", "stripe"],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "cors": "^2.8.6",
+    "dotenv": "^18.0.10",
+    "express": "^5.3.0",
+    "jsonwebtoken": "^9.0.3",
+    "mongodb": "^7.9.1",
+    "node-cron": "^4.6.0",
+    "stripe": "^23.2.0"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.14"
+  }
+}
