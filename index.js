@@ -7,6 +7,7 @@ import favoritesRoutes from "./routes/favorites.js";
 import paymentsRoutes from "./routes/payments.js";
 import bookingsRoutes from "./routes/bookings.js";
 import usersRoutes from "./routes/users.js";
+import analyticsRoutes from "./routes/analytics.js";
 
 const app = express();
 
@@ -46,6 +47,7 @@ app.use("/favorites", favoritesRoutes);
 app.use("/payments", paymentsRoutes);
 app.use("/bookings", bookingsRoutes);
 app.use("/users", usersRoutes);
+app.use("/analytics", analyticsRoutes);
 
 // 404 Not Found Handler
 app.use((req, res) => {
