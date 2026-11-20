@@ -5,6 +5,7 @@ import cors from "cors";
 import equipmentRoutes from "./routes/equipment.js";
 import favoritesRoutes from "./routes/favorites.js";
 import paymentsRoutes from "./routes/payments.js";
+import bookingsRoutes from "./routes/bookings.js";
 
 const app = express();
 
@@ -42,6 +43,7 @@ app.get("/", (req, res) => {
 app.use("/equipment", equipmentRoutes);
 app.use("/favorites", favoritesRoutes);
 app.use("/payments", paymentsRoutes);
+app.use("/bookings", bookingsRoutes);
 
 // 404 Not Found Handler
 app.use((req, res) => {
