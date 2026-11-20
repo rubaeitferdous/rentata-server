@@ -89,7 +89,10 @@ router.post("/checkout", verifyToken, verifyRenter, async (req, res) => {
             product_data: {
               name: `${equipment.name} (${quantity} unit${quantity > 1 ? "s" : ""})`,
               description: `Rental Period: ${startDate} to ${endDate} (${equipment.rentalType})`,
-              images: equipment.image ? [equipment.image] : [],
+              images:
+                equipment.image && /^https?:\/\//i.test(equipment.image)
+                  ? [equipment.image]
+                  : [],
             },
           },
         },

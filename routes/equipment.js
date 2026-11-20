@@ -75,10 +75,17 @@ router.get("/", async (req, res) => {
       query.rentalType = rentalType;
     }
 
-    if (minPrice || maxPrice) {
+    if (
+      (minPrice && !isNaN(Number(minPrice))) ||
+      (maxPrice && !isNaN(Number(maxPrice)))
+    ) {
       query.price = {};
-      if (minPrice) query.price.$gte = Number(minPrice);
-      if (maxPrice) query.price.$lte = Number(maxPrice);
+      if (minPrice && !isNaN(Number(minPrice))) {
+        query.price.$gte = Number(minPrice);
+      }
+      if (maxPrice && !isNaN(Number(maxPrice))) {
+        query.price.$lte = Number(maxPrice);
+      }
     }
 
     if (availability === "available") {
