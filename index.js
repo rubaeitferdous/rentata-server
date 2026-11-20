@@ -8,6 +8,7 @@ import paymentsRoutes from "./routes/payments.js";
 import bookingsRoutes from "./routes/bookings.js";
 import usersRoutes from "./routes/users.js";
 import analyticsRoutes from "./routes/analytics.js";
+import { startCron } from "./jobs/cron.js";
 
 const app = express();
 
@@ -70,6 +71,7 @@ if (!process.env.VERCEL) {
   const port = process.env.PORT || 5000;
   app.listen(port, () => {
     console.log(`Rentara API server running on port ${port}`);
+    startCron();
   });
 }
 
