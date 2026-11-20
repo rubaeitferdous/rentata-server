@@ -6,6 +6,7 @@ import equipmentRoutes from "./routes/equipment.js";
 import favoritesRoutes from "./routes/favorites.js";
 import paymentsRoutes from "./routes/payments.js";
 import bookingsRoutes from "./routes/bookings.js";
+import usersRoutes from "./routes/users.js";
 
 const app = express();
 
@@ -44,6 +45,7 @@ app.use("/equipment", equipmentRoutes);
 app.use("/favorites", favoritesRoutes);
 app.use("/payments", paymentsRoutes);
 app.use("/bookings", bookingsRoutes);
+app.use("/users", usersRoutes);
 
 // 404 Not Found Handler
 app.use((req, res) => {
