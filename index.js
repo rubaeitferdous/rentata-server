@@ -2,6 +2,8 @@ import "dotenv/config";
 import express from "express";
 import cors from "cors";
 
+import equipmentRoutes from "./routes/equipment.js";
+
 const app = express();
 
 const allowedOrigins = [
@@ -33,6 +35,9 @@ app.get("/", (req, res) => {
     timestamp: new Date().toISOString(),
   });
 });
+
+// Equipment Routes (Public search/filter, Owner listings, Admin approvals)
+app.use("/equipment", equipmentRoutes);
 
 // 404 Not Found Handler
 app.use((req, res) => {
