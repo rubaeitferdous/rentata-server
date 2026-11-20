@@ -3,6 +3,7 @@ import express from "express";
 import cors from "cors";
 
 import equipmentRoutes from "./routes/equipment.js";
+import favoritesRoutes from "./routes/favorites.js";
 
 const app = express();
 
@@ -38,6 +39,7 @@ app.get("/", (req, res) => {
 
 // Equipment Routes (Public search/filter, Owner listings, Admin approvals)
 app.use("/equipment", equipmentRoutes);
+app.use("/favorites", favoritesRoutes);
 
 // 404 Not Found Handler
 app.use((req, res) => {
