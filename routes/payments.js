@@ -79,40 +79,79 @@ router.post("/checkout", verifyToken, verifyRenter, async (req, res) => {
     // If Stripe secret key is configured, initiate real Stripe Checkout session
     if (process.env.STRIPE_SECRET_KEY && process.env.STRIPE_SECRET_KEY.startsWith("sk_")) {
       const stripe = getStripe();
-      const session = await stripe.checkout.sessions.create({
-        mode: "payment",
-        customer_email: req.user.email,
-        line_items: [
-          {
-            quantity: 1,
-            price_data: {
-              currency: "usd",
-              unit_amount: Math.round(amount * 100),
-              product_data: {
-                name: `${equipment.name} (${quantity} unit${quantity > 1 ? "s" : ""})`,
-                description: `Rental Period: ${startDate} to ${endDate} (${equipment.rentalType})`,
-                images:
-                  equipment.image && /^https?:\/\//i.test(equipment.image)
-                    ? [equipment.image]
-                    : [],
+      let session;
+
+      try {
+        session = await stripe.checkout.sessions.create({
+          mode: "payment",
+          customer_email: req.user.email,
+          line_items: [
+            {
+              quantity: 1,
+              price_data: {
+                currency: "usd",
+                unit_amount: Math.round(amount * 100),
+                product_data: {
+                  name: `${equipment.name} (${quantity} unit${quantity > 1 ? "s" : ""})`,
+                  description: `Rental Period: ${startDate} to ${endDate} (${equipment.rentalType})`,
+                  images:
+                    equipment.image && /^https:\/\//i.test(equipment.image)
+                      ? [equipment.image]
+                      : [],
+                },
               },
             },
+          ],
+          metadata: {
+            equipmentId,
+            startDate,
+            endDate,
+            quantity: String(quantity),
+            contactNumber,
+            deliveryAddress: deliveryAddress.slice(0, 400),
+            notes: (notes || "").slice(0, 400),
+            customerEmail: req.user.email,
+            amount: String(amount),
           },
-        ],
-        metadata: {
-          equipmentId,
-          startDate,
-          endDate,
-          quantity: String(quantity),
-          contactNumber,
-          deliveryAddress: deliveryAddress.slice(0, 400),
-          notes: (notes || "").slice(0, 400),
-          customerEmail: req.user.email,
-          amount: String(amount),
-        },
-        success_url: `${clientUrl}/payment/success?session_id={CHECKOUT_SESSION_ID}`,
-        cancel_url: `${clientUrl}/equipment/${equipmentId}`,
-      });
+          success_url: `${clientUrl}/payment/success?session_id={CHECKOUT_SESSION_ID}`,
+          cancel_url: `${clientUrl}/equipment/${equipmentId}`,
+        });
+      } catch (stripeErr) {
+        if (stripeErr.message && stripeErr.message.toLowerCase().includes("image")) {
+          session = await stripe.checkout.sessions.create({
+            mode: "payment",
+            customer_email: req.user.email,
+            line_items: [
+              {
+                quantity: 1,
+                price_data: {
+                  currency: "usd",
+                  unit_amount: Math.round(amount * 100),
+                  product_data: {
+                    name: `${equipment.name} (${quantity} unit${quantity > 1 ? "s" : ""})`,
+                    description: `Rental Period: ${startDate} to ${endDate} (${equipment.rentalType})`,
+                  },
+                },
+              },
+            ],
+            metadata: {
+              equipmentId,
+              startDate,
+              endDate,
+              quantity: String(quantity),
+              contactNumber,
+              deliveryAddress: deliveryAddress.slice(0, 400),
+              notes: (notes || "").slice(0, 400),
+              customerEmail: req.user.email,
+              amount: String(amount),
+            },
+            success_url: `${clientUrl}/payment/success?session_id={CHECKOUT_SESSION_ID}`,
+            cancel_url: `${clientUrl}/equipment/${equipmentId}`,
+          });
+        } else {
+          throw stripeErr;
+        }
+      }
 
       return res.json({ url: session.url, sessionId: session.id });
     }
