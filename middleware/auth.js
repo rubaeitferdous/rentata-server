@@ -61,11 +61,11 @@ const checkRole = (...allowedRoles) => (req, res, next) => {
   });
 };
 
-// Customer / Renter permission
-export const verifyRenter = checkRole("customer", "renter");
+// Customer / Renter permission (Admins also permitted for reservation testing)
+export const verifyRenter = checkRole("customer", "renter", "admin");
 
-// Equipment Owner permission
-export const verifyOwner = checkRole("owner");
+// Equipment Owner permission (Admins also permitted for fleet oversight)
+export const verifyOwner = checkRole("owner", "admin");
 
-// Administrator permission
+// Administrator permission (Strictly admin only)
 export const verifyAdmin = checkRole("admin");
