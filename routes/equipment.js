@@ -75,15 +75,15 @@ router.get("/", async (req, res) => {
       query.rentalType = rentalType;
     }
 
-    if (
-      (minPrice && !isNaN(Number(minPrice))) ||
-      (maxPrice && !isNaN(Number(maxPrice)))
-    ) {
+    const hasMinPrice = minPrice !== undefined && minPrice !== "" && !isNaN(Number(minPrice));
+    const hasMaxPrice = maxPrice !== undefined && maxPrice !== "" && !isNaN(Number(maxPrice));
+
+    if (hasMinPrice || hasMaxPrice) {
       query.price = {};
-      if (minPrice && !isNaN(Number(minPrice))) {
+      if (hasMinPrice) {
         query.price.$gte = Number(minPrice);
       }
-      if (maxPrice && !isNaN(Number(maxPrice))) {
+      if (hasMaxPrice) {
         query.price.$lte = Number(maxPrice);
       }
     }
@@ -205,14 +205,37 @@ router.post("/", verifyToken, verifyOwner, async (req, res) => {
   try {
     const data = pick(req.body);
 
-    for (const k of FIELDS) {
+    const REQUIRED_FIELDS = [
+      "name",
+      "description",
+      "category",
+      "location",
+      "price",
+      "rentalType",
+      "availableQuantity",
+      "image",
+    ];
+
+    for (const k of REQUIRED_FIELDS) {
       if (data[k] === undefined || data[k] === "") {
         return res.status(400).json({ message: `Field '${k}' is required` });
       }
     }
 
+    if (isNaN(data.price) || data.price <= 0) {
+      return res.status(400).json({ message: "Rental price must be a positive number" });
+    }
+
+    if (!Number.isInteger(data.availableQuantity) || data.availableQuantity < 0) {
+      return res.status(400).json({ message: "Available quantity must be a non-negative integer" });
+    }
+
     const doc = {
       ...data,
+      condition: data.condition || "Excellent",
+      brand: data.brand || "",
+      model: data.model || "",
+      terms: data.terms || "Standard equipment rental terms and deposit policies apply.",
       status: "pending",
       ownerId: req.user.id,
       ownerName: req.user.name,

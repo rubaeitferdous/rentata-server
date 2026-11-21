@@ -281,12 +281,12 @@ router.post("/confirm", verifyToken, verifyRenter, async (req, res) => {
       await paymentsCol.insertOne({
         bookingId: insertedId.toString(),
         sessionId,
-        transactionId: session.payment_intent?.id || session.id,
+        transactionId,
         customerEmail: req.user.email,
         ownerEmail: equipment.ownerEmail,
         equipmentId: meta.equipmentId,
         amount: Number(meta.amount),
-        currency: session.currency || "usd",
+        currency,
         paymentStatus: "paid",
         createdAt: new Date(),
       });

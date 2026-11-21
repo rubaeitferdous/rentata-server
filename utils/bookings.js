@@ -30,11 +30,13 @@ export async function completeExpiredBookings() {
  */
 export async function getAvailableQty(equipment, startDate, endDate) {
   const bookings = await col("bookings");
+  const eqIdStr = equipment._id.toString();
+
   const agg = await bookings
     .aggregate([
       {
         $match: {
-          equipmentId: equipment._id.toString(),
+          equipmentId: { $in: [eqIdStr, equipment._id] },
           bookingStatus: "confirmed",
           startDate: { $lte: endDate },
           endDate: { $gte: startDate },
