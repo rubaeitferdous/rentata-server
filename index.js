@@ -12,8 +12,10 @@ import { startCron } from "./jobs/cron.js";
 
 const app = express();
 
+const clientUrl = process.env.CLIENT_URL ? process.env.CLIENT_URL.replace(/\/$/, "") : null;
+
 const allowedOrigins = [
-  process.env.CLIENT_URL,
+  clientUrl,
   "http://localhost:3000",
   "http://127.0.0.1:3000",
 ].filter(Boolean);
@@ -22,7 +24,13 @@ app.use(
   cors({
     origin: (origin, callback) => {
       // allow requests with no origin (e.g. mobile apps, curl, server-to-server)
-      if (!origin || allowedOrigins.includes(origin) || process.env.NODE_ENV !== "production") {
+      if (
+        !origin ||
+        allowedOrigins.includes(origin) ||
+        (clientUrl && origin === clientUrl) ||
+        origin.endsWith(".vercel.app") ||
+        process.env.NODE_ENV !== "production"
+      ) {
         return callback(null, true);
       }
       return callback(new Error("CORS policy violation"), false);

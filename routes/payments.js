@@ -74,7 +74,7 @@ router.post("/checkout", verifyToken, verifyRenter, async (req, res) => {
 
     // Calculate verified total amount
     const amount = calcAmount(equipment, startDate, endDate, quantity);
-    const clientUrl = process.env.CLIENT_URL || "http://localhost:3000";
+    const clientUrl = process.env.CLIENT_URL ? process.env.CLIENT_URL.replace(/\/$/, "") : "http://localhost:3000";
 
     // If Stripe secret key is configured, initiate real Stripe Checkout session
     if (process.env.STRIPE_SECRET_KEY && process.env.STRIPE_SECRET_KEY.startsWith("sk_")) {
