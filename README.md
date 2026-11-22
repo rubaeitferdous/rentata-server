@@ -12,6 +12,16 @@ Rentara API is the backend service powering the **Rentara Equipment Rental Marke
 
 ---
 
+## 🔑 Submission & Evaluation Credentials
+
+| Role | Email | Password | Access Capabilities |
+| :--- | :--- | :--- | :--- |
+| **Administrator** | `admin@rentara.com` | `AdminPassword123` | Full Admin Console, User Role Governance, Catalog Moderation, Platform Turnover Analytics, Global Ledger |
+| **Equipment Owner** | `owner@rentara.com` | `OwnerPassword123` | Add & Edit Equipment, My Fleet Management, Order Fulfillment, Earnings Analytics |
+| **Customer / Renter**| `customer@rentara.com`| `CustomerPassword123`| Public Catalog Browsing, Equipment Booking, Stripe Escrow Checkout, Saved Favorites, Rental Receipts |
+
+---
+
 ## 🌟 Key Features
 
 ### 1. Server-Side Search, Filter, Sort & Pagination (Challenge 1)
