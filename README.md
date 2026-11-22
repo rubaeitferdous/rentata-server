@@ -22,18 +22,6 @@
 
 ---
 
-## 🔑 Submission & Evaluation Credentials
-
-Use these verified accounts to test and evaluate role-based API endpoints and dashboard permissions:
-
-| Role | Email | Password | Access Capabilities |
-| :--- | :--- | :--- | :--- |
-| **Administrator** | `admin@rentara.com` | `AdminPassword123` | Full Admin Console, User Governance, Catalog Moderation, Platform Turnover Analytics, Global Rental Ledger |
-| **Equipment Owner** | `owner@rentara.com` | `OwnerPassword123` | Add & Edit Equipment, Fleet Inventory Management, Incoming Rental Order Fulfillment, Monthly Revenue Analytics |
-| **Customer / Renter**| `customer@rentara.com`| `CustomerPassword123`| Public Catalog Browsing, Equipment Booking & Availability Check, Stripe Escrow Checkout, Saved Favorites, Rental Receipts |
-
----
-
 ## 🌟 Key Features & Architecture
 
 ### 1. Advanced Search, Filter, Sort & Pagination — *Challenge 1*
