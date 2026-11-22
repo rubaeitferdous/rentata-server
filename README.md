@@ -1,90 +1,124 @@
-# Rentara Server — Equipment Rental Platform API
+# Rentara Server — Equipment Rental Platform Backend API
 
-Rentara API is the backend service powering the **Rentara Equipment Rental Marketplace**, connecting equipment owners with renters through secure inventory management, server-side filtering, role-based access control, and Stripe payment integration.
+[![Express 5](https://img.shields.io/badge/Express-5.3-black.svg?logo=express)](https://expressjs.com/)
+[![Node.js](https://img.shields.io/badge/Node.js-20+-green.svg?logo=node.js)](https://nodejs.org/)
+[![MongoDB Native](https://img.shields.io/badge/MongoDB-7.9%20Native%20Driver-brightgreen.svg?logo=mongodb)](https://www.mongodb.com/)
+[![JWT](https://img.shields.io/badge/Auth-JWT%20Verification-orange.svg?logo=jsonwebtokens)](https://jwt.io/)
+[![Stripe](https://img.shields.io/badge/Stripe-Checkout%20API-635bff.svg?logo=stripe)](https://stripe.com/)
+[![Vercel](https://img.shields.io/badge/Vercel-Serverless%20API-000000.svg?logo=vercel)](https://rentara-server.vercel.app/)
+
+**Rentara Server** is the high-performance backend API powering the **Rentara Equipment Rental Marketplace**. Built on **Express 5** and the **MongoDB Native Driver**, it provides high-throughput inventory management, multi-criteria server-side filtering, role-based authorization middlewares, Stripe payment escrow handling, real-time analytics aggregation, and automated rental lifecycle transitions.
 
 ---
 
-## 📌 Project Overview
-- **Project Name:** Rentara Server (Assignment 9 - Category 003)
-- **Live API Endpoint:** `https://YOUR-RENTARA-API.vercel.app` (or `http://localhost:5000` locally)
-- **Primary Client:** [Rentara Client (Next.js)](http://localhost:3000)
-- **Architecture:** Express 5 on Node.js (ES Modules) + MongoDB Native Driver + JWT Authentication + Stripe Payments.
+## 🔗 Project Links
+
+| Resource | URL |
+| :--- | :--- |
+| 🌐 **Live Site Link (Client)** | [https://rentara-client.vercel.app/](https://rentara-client.vercel.app/) |
+| 🔗 **Live Server API** | [https://rentara-server.vercel.app/](https://rentara-server.vercel.app/) |
+| ⚙️ **GitHub Repository (Server)** | [https://github.com/rubaeitferdous/rentata-server](https://github.com/rubaeitferdous/rentata-server) |
+| 💻 **GitHub Repository (Client)** | [https://github.com/rubaeitferdous/rentara-client](https://github.com/rubaeitferdous/rentara-client) |
 
 ---
 
 ## 🔑 Submission & Evaluation Credentials
 
+Use these verified accounts to test and evaluate role-based API endpoints and dashboard permissions:
+
 | Role | Email | Password | Access Capabilities |
 | :--- | :--- | :--- | :--- |
-| **Administrator** | `admin@rentara.com` | `AdminPassword123` | Full Admin Console, User Role Governance, Catalog Moderation, Platform Turnover Analytics, Global Ledger |
-| **Equipment Owner** | `owner@rentara.com` | `OwnerPassword123` | Add & Edit Equipment, My Fleet Management, Order Fulfillment, Earnings Analytics |
-| **Customer / Renter**| `customer@rentara.com`| `CustomerPassword123`| Public Catalog Browsing, Equipment Booking, Stripe Escrow Checkout, Saved Favorites, Rental Receipts |
+| **Administrator** | `admin@rentara.com` | `AdminPassword123` | Full Admin Console, User Governance, Catalog Moderation, Platform Turnover Analytics, Global Rental Ledger |
+| **Equipment Owner** | `owner@rentara.com` | `OwnerPassword123` | Add & Edit Equipment, Fleet Inventory Management, Incoming Rental Order Fulfillment, Monthly Revenue Analytics |
+| **Customer / Renter**| `customer@rentara.com`| `CustomerPassword123`| Public Catalog Browsing, Equipment Booking & Availability Check, Stripe Escrow Checkout, Saved Favorites, Rental Receipts |
 
 ---
 
-## 🌟 Key Features
+## 🌟 Key Features & Architecture
 
-### 1. Server-Side Search, Filter, Sort & Pagination (Challenge 1)
-- Dynamic search querying equipment title, location, and category with regex escaping.
-- Multi-criteria filtering: category, rental type (Daily, Weekly, Monthly), price range bounds, and availability.
-- Sorting options: Price Low-to-High, Price High-to-Low, and Recently Added.
-- Pagination with customizable page and limit boundaries.
+### 1. Advanced Search, Filter, Sort & Pagination — *Challenge 1*
+- **Full-Text Regex Search:** Dynamic search querying equipment titles, descriptions, and location keywords with regex escaping to prevent injection.
+- **Multi-Criteria Filtering:** Filter combinations for:
+  - `category`: Category matching across industrial, cinematic, transport, agriculture, electronics, and event gear.
+  - `rentalType`: Hourly, Daily, Weekly, or Monthly rental horizons.
+  - `minPrice` / `maxPrice`: Strict price bound querying.
+  - `availability`: Stock availability filtering (`in-stock`, `out-of-stock`, or `all`).
+- **Dynamic Sorting:** Flexible sort parameters (`price-asc`, `price-desc`, `newest`).
+- **Server-Side Pagination:** Efficient pagination metadata (`page`, `limit`, `total`, `totalPages`) returning precise sub-slices of data.
 
-### 2. JWT Verification & Role-Based Access Control (Challenge 2)
-- Unified MongoDB user database shared with Next.js BetterAuth.
-- Custom Express middlewares:
-  - `verifyToken`: Validates Bearer JWT and pulls real-time user record and roles from MongoDB.
-  - `verifyRenter`: Restricts booking and favorites actions to Customer accounts.
-  - `verifyOwner`: Protects inventory submission, modification, and incoming rental ledger.
-  - `verifyAdmin`: Secures administrative user management, equipment approvals, and global transaction ledger.
+### 2. Cryptographic JWT Verification & Role-Based Middlewares — *Challenge 2*
+- **Shared Database Authentication:** Shares the MongoDB Atlas cluster with Next.js BetterAuth.
+- **Custom Security Middlewares (`middlewares/auth.js`):**
+  - `verifyToken`: Extracts and verifies Bearer JWT tokens, loading the live user profile and role from the database.
+  - `verifyRenter`: Restricts booking reservations, checkout sessions, and wishlist modifications to active customer accounts.
+  - `verifyOwner`: Enforces that only verified gear owners can add, edit, or view incoming fulfillment orders for their own equipment.
+  - `verifyAdmin`: Secures administrative user management, equipment catalog approval/rejection queues, and global transaction audits.
 
-### 3. Business & Platform Analytics (Challenge 3)
-- **Admin Analytics:** Platform-wide metrics including total users, total equipment, total bookings, pending approvals, completed rentals, gross platform revenue, and monthly booking & revenue trends.
-- **Owner Analytics:** Owner-specific metrics including total listed equipment, bookings count, completed rentals, net earnings, and monthly earnings breakdown.
+### 3. Business & Platform Analytics Aggregation — *Challenge 3*
+- **Admin Analytics Engine (`GET /analytics/admin`):**
+  - Aggregates platform-wide metrics: Total Users, Total Equipment, Total Bookings, Pending Approvals, Completed Rentals, and Gross Platform Revenue.
+  - Computes monthly booking volume and gross revenue trends formatted for frontend Recharts visualization.
+- **Owner Analytics Engine (`GET /analytics/owner`):**
+  - Owner-specific metrics: Listed Fleet Count, Orders Received, Completed Rentals, and Net Earnings.
+  - Computes monthly income breakdowns based on completed and paid rental transactions.
 
-### 4. Overlapping Availability & Payment Flow
-- Server-side calculation engine preventing equipment double-booking by computing overlapping dates `(startDate <= req.endDate AND endDate >= req.startDate)`.
-- Authoritative rental price calculation on the server before generating Stripe Checkout session.
-- Idempotent payment confirmation endpoint updating booking status and recording payment transactions.
+### 4. Overlapping Availability Engine & Stripe Checkout
+- **Double-Booking Prevention:** Computes date overlaps `(startDate <= req.endDate AND endDate >= req.startDate)` across active reservations before permitting a booking.
+- **Server-Side Authoritative Pricing:** Calculates rental duration in days and computes exact line-item amounts before initializing the Stripe session.
+- **Idempotent Payment Confirmation:** Verifies Stripe Checkout sessions directly with Stripe before recording the booking in MongoDB, preventing replay attacks or double-crediting.
 
-### 5. Automated Booking Lifecycle Management
-- Background cron job via `node-cron` scanning and auto-transitioning `confirmed` bookings to `completed` once the rental end date elapses.
-- Lazy completion hooks on analytics and booking fetch queries ensuring accuracy on serverless environments.
+### 5. Automated Rental Lifecycle Management
+- **Background Cron Job:** Uses `node-cron` on persistent servers to scan and auto-transition `confirmed` rentals to `completed` once their end dates elapse.
+- **Lazy Completion Fallback:** Serverless deployments on Vercel run lazy status checks upon analytics and booking fetch queries, ensuring metrics remain 100% accurate without background daemon dependencies.
 
 ---
 
-## 📦 NPM Packages Used
+## 📦 NPM Packages & Dependencies
 
 | Package | Version | Purpose |
-|---|---|---|
-| `express` | `^5.3.0` | High-performance HTTP server framework |
-| `mongodb` | `^7.9.1` | Native MongoDB driver for Atlas cluster integration |
-| `cors` | `^2.8.6` | Cross-Origin Resource Sharing middleware |
-| `dotenv` | `^18.0.10` | Environment variable loader |
-| `jsonwebtoken` | `^9.0.3` | JWT signature verification for client-server auth bridge |
-| `stripe` | `^23.2.0` | Stripe Checkout Sessions and payment verification |
-| `node-cron` | `^4.6.0` | Scheduled background task runner for booking completion |
-| `nodemon` (dev) | `^3.1.14` | Hot-reloading development server |
+| :--- | :--- | :--- |
+| `express` | `^5.3.0` | High-performance HTTP web framework (Express 5 with native async error handling) |
+| `mongodb` | `^7.9.1` | Native MongoDB driver for high-throughput Atlas cluster operations |
+| `cors` | `^2.8.6` | Configurable Cross-Origin Resource Sharing with dynamic origin validation |
+| `dotenv` | `^18.0.10` | Loads environment variables from local `.env` files into `process.env` |
+| `jsonwebtoken` | `^9.0.3` | Cryptographic JWT verification and decoding for authentication |
+| `stripe` | `^23.2.0` | Official Stripe SDK for Checkout Session creation and payment validation |
+| `node-cron` | `^4.6.0` | Scheduled background task runner for rental status transitions |
+| `nodemon` *(dev)* | `^3.1.14` | Development file watcher and auto-reload utility |
 
 ---
 
 ## 🚀 Getting Started Locally
 
-### 1. Clone & Install Dependencies
+### Prerequisites
+- **Node.js:** $\ge 20$ (Tested on Node v20+ / v26)
+- **MongoDB Atlas** or local MongoDB instance
+
+### 1. Clone the Server Repository
 ```bash
-cd rentara-server
+git clone https://github.com/rubaeitferdous/rentata-server.git
+cd rentata-server
 npm install
 ```
 
-### 2. Environment Configuration
-Create a `.env` file in the root of `rentara-server/`:
+### 2. Configure Environment Variables
+Create a `.env` file in the root directory:
+
 ```env
 PORT=5000
 NODE_ENV=development
-MONGODB_URI=your_mongodb_connection_string
+
+# MongoDB Connection String & Database Name
+MONGODB_URI=mongodb+srv://<username>:<password>@cluster0.mongodb.net/?retryWrites=true&w=majority
 DB_NAME=rentara_db
-JWT_SECRET=your_shared_jwt_secret
-STRIPE_SECRET_KEY=sk_test_your_stripe_secret
+
+# Shared JWT Secret (Must match JWT_SECRET in rentara-client)
+JWT_SECRET=your_synchronized_jwt_secret
+
+# Stripe Secret Key
+STRIPE_SECRET_KEY=sk_test_your_stripe_secret_key
+
+# Client Application URL for CORS & Payment Redirects
 CLIENT_URL=http://localhost:3000
 ```
 
@@ -92,54 +126,108 @@ CLIENT_URL=http://localhost:3000
 ```bash
 npm run dev
 ```
-The server will start on `http://localhost:5000`.
+The server will start on [http://localhost:5000](http://localhost:5000) with hot-reload enabled.
 
-### 4. Utility Scripts
-- **Seed Equipment:**
+### 4. Seed Data & Management Utilities
+- **Seed Equipment Catalog:**
   ```bash
   npm run seed
   ```
-- **Promote User to Admin:**
+- **Promote a User to Administrator:**
   ```bash
   npm run make-admin user@example.com
+  ```
+- **Set Any User Role (`admin`, `owner`, `customer`):**
+  ```bash
+  node scripts/setRole.js user@example.com <role>
   ```
 
 ---
 
 ## 📡 Core API Endpoints
 
-### Equipment (`/equipment`)
-- `GET /equipment` — Public search, filter, sort & paginated equipment list.
-- `GET /equipment/featured` — 6 approved items (using MongoDB limit).
-- `GET /equipment/:id` — Equipment details (Private route, checks approval & role).
-- `GET /equipment/mine` — Owner's listed equipment (`verifyOwner`).
+### 🩺 Health & Diagnostic
+- `GET /` — Service health check returning uptime and status.
+
+### 🚜 Equipment (`/equipment`)
+- `GET /equipment` — Public catalog with search, filter, sort & pagination.
+- `GET /equipment/featured` — Top 6 approved equipment items.
+- `GET /equipment/:id` — Equipment details (Private route; checks approval & role).
+- `GET /equipment/mine` — Owner's equipment inventory (`verifyOwner`).
 - `POST /equipment` — List new equipment with pending status (`verifyOwner`).
 - `PATCH /equipment/:id` — Update equipment details (`verifyOwner` / `verifyAdmin`).
-- `DELETE /equipment/:id` — Delete equipment (`verifyOwner` / `verifyAdmin`).
+- `DELETE /equipment/:id` — Remove equipment from catalog (`verifyOwner` / `verifyAdmin`).
 - `PATCH /equipment/:id/status` — Approve or reject equipment (`verifyAdmin`).
 
-### Favorites (`/favorites`)
-- `GET /favorites` — Get current customer's saved equipment items.
-- `POST /favorites` — Add equipment to favorites.
-- `DELETE /favorites/:equipmentId` — Remove equipment from favorites.
-- `GET /favorites/check/:equipmentId` — Check if equipment is favorited.
+### ❤️ Favorites (`/favorites`)
+- `GET /favorites` — Get current customer's saved gear wishlist (`verifyRenter`).
+- `POST /favorites` — Add equipment item to saved favorites (`verifyRenter`).
+- `DELETE /favorites/:equipmentId` — Remove equipment item from saved favorites (`verifyRenter`).
+- `GET /favorites/check/:equipmentId` — Check if an item is currently favorited (`verifyToken`).
 
-### Payments & Checkout (`/payments`)
-- `POST /payments/checkout` — Validate dates/stock and create Stripe checkout session.
-- `POST /payments/confirm` — Validate Stripe session and record booking + payment.
+### 💳 Payments & Stripe Checkout (`/payments`)
+- `POST /payments/checkout` — Validate date availability and create Stripe checkout session (`verifyRenter`).
+- `POST /payments/confirm` — Validate Stripe session and record booking with paid status (`verifyToken`).
 
-### Bookings (`/bookings`)
-- `GET /bookings/my` — Customer rental history (`verifyRenter`).
-- `GET /bookings/owner` — Owner incoming rentals (`verifyOwner`).
-- `GET /bookings/admin` — Global rental transactions ledger (`verifyAdmin`).
+### 📅 Bookings & Rentals (`/bookings`)
+- `GET /bookings/my` — Customer rental history and active receipts (`verifyRenter`).
+- `GET /bookings/owner` — Incoming equipment rental fulfillment ledger (`verifyOwner`).
+- `GET /bookings/admin` — Global platform transaction ledger (`verifyAdmin`).
 
-### Users & Profiles (`/users`)
-- `GET /users/me` — Current user profile details.
-- `PATCH /users/profile` — Update phone, address, name, or profile photo.
-- `GET /users` — Admin view of all registered accounts (`verifyAdmin`).
-- `PATCH /users/:id/role` — Admin role assignment (`verifyAdmin`).
-- `DELETE /users/:id` — Admin account deletion (`verifyAdmin`).
+### 👥 Users & Accounts (`/users`)
+- `GET /users/me` — Current authenticated user profile (`verifyToken`).
+- `PATCH /users/profile` — Update user profile details (Name, Phone, Address, Image) (`verifyToken`).
+- `GET /users` — Admin view of all registered user accounts (`verifyAdmin`).
+- `PATCH /users/:id/role` — Update a user's role (`admin`, `owner`, `customer`) (`verifyAdmin`).
+- `DELETE /users/:id` — Delete a user account (`verifyAdmin`).
 
-### Analytics (`/analytics`)
-- `GET /analytics/admin` — Platform KPI metrics and monthly trends (`verifyAdmin`).
-- `GET /analytics/owner` — Owner revenue and booking volume stats (`verifyOwner`).
+### 📊 Business Analytics (`/analytics`)
+- `GET /analytics/admin` — Platform KPI metrics and monthly booking/turnover trends (`verifyAdmin`).
+- `GET /analytics/owner` — Owner revenue metrics and monthly earnings breakdown (`verifyOwner`).
+
+---
+
+## 📁 Project Directory Structure
+
+```
+rentara-server/
+├── index.js              # Express app initialization, CORS, and route mounting
+├── vercel.json           # Vercel serverless deployment routing
+├── config/
+│   └── db.js             # MongoDB native client connection & database export
+├── jobs/
+│   └── cron.js           # Automated booking completion cron runner
+├── middlewares/
+│   └── auth.js           # verifyToken, verifyRenter, verifyOwner, verifyAdmin
+├── routes/
+│   ├── analytics.js      # Admin & Owner analytics aggregation pipelines
+│   ├── bookings.js       # Customer, Owner, and Admin rental ledgers
+│   ├── equipment.js      # Public search/filter, CRUD & moderation endpoints
+│   ├── favorites.js      # Customer favorites/wishlist management
+│   ├── payments.js       # Stripe Checkout Sessions & payment confirmation
+│   └── users.js          # Profile updates, admin user table & role assignment
+└── scripts/
+    ├── makeAdmin.js      # Script to promote any user to admin
+    ├── seedEquipment.js  # Database seeder with sample equipment catalog
+    └── setRole.js        # Script to set any user role (admin, owner, customer)
+```
+
+---
+
+## 🛡️ Security & Architecture Best Practices
+
+- **Strict CORS Policy:** Dynamic origin checking allowing only authorized clients (`https://rentara-client.vercel.app`, local dev origins, and Vercel preview URLs).
+- **Stateless Authentication:** Cryptographic JWT verification paired with instant database lookups guarantees real-time permissions without stale credentials.
+- **Input Sanitization:** Regex inputs in search endpoints are escaped against ReDoS and query injection.
+- **Atomic Operations:** Stripe payments and rental reservations use MongoDB atomic operators to prevent race conditions during booking creation.
+
+---
+
+## 👨‍💻 Author
+
+**Rubaeit Ferdous Himel**  
+- **GitHub:** [@rubaeitferdous](https://github.com/rubaeitferdous)  
+- **Live Client:** [https://rentara-client.vercel.app/](https://rentara-client.vercel.app/)  
+- **Live Server:** [https://rentara-server.vercel.app/](https://rentara-server.vercel.app/)
+
+Created for **Programming Hero Batch 14 - Assignment 9 (Category 003)**.
